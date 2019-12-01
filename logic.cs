@@ -7,45 +7,19 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Data;
 
+
 class Logic {
 
-  // Status codes
-  public enum SC {
-    OK = 0,
-    EE_USNUM = -100,  // error: expecting a number without sign
-                      //   eg:  1  1.0  0.1  .1
-    EE_OSNUM,         // error: expecting a number with optional sign
-                      //   eg:  -1 +1 +1.0 -1.0 -0.1 +0.1 -.1 +.1
-                      //   eg:  1 1.0 0.1 .1
-    EE_FRAC,          // error: expecting fraction
-                      //   eg:  1 01 001 0001 123450
-    EX_DEC,           // error: extra decimal point
-    EE_OPER,          // error: expecting operator
-    IU_KEY = -200,    // internal error:  Unknown key press
-  };
-
-  // get status string from status code
-  public string GetStatusString(SC sc) {
-    var StsMsg = new Dictionary<SC, string> {
-      { SC.OK,         ""                                                 },
-      { SC.EE_USNUM,   "Error: expecting a number without sign."          },
-      { SC.EE_OSNUM,   "Error: expecting a number with optional sign."    },
-      { SC.EE_FRAC,    "Error: expecting fractional part of number."      },
-      { SC.EX_DEC,     "Error: extra decimal point."                      },
-      { SC.EE_OPER,    "Error: expecting operator."                       },
-      { SC.IU_KEY,     "Internal error:  Unknown key press."              },
-    };
-    return StsMsg[sc];
-  }
-
-  // list of keys accepted
+  // member data
   private string Inputs;
   private string EqualAtEnd;
+  private string Error;
 
   // initializer
   public Logic() {
     this.Inputs = "";
     this.EqualAtEnd = "";
+    this.Error = "";
   }
 
   // get current inputs
@@ -53,8 +27,13 @@ class Logic {
     return this.Inputs + this.EqualAtEnd;
   }
 
+  // get error message
+  public string GetError() {
+    return this.Error;
+  }
+
   // handle input key as string, convert to character
-  public SC DoKey(string ks) {
+  public bool DoKey(string ks) {
     // allow string aliases for keys
     var KeyMap = new Dictionary<string,char> {
       { "Backspace" , '\b'},
@@ -64,14 +43,17 @@ class Logic {
     // if single character, use it
     if ( 1 == ks.Length )          return DoKey(ks[0]);
     // error unrecognized key string
-    return SC.IU_KEY;
+    this.Error = $"Unexpected keystring: {safe_fmt(ks)}";
+    return false;
   }
 
  /*-----------------------------------------------------
   Handle input key as character
  */
 
-  private SC DoKey(char kcr) {
+  private bool DoKey(char kcr) {
+    // default to no error
+    this.Error = "";
     // each key is represented by a character
     char[] KeyChars = {
       '0','1','2','3','4','5','6','7','8','9',    // digits
@@ -87,7 +69,10 @@ class Logic {
     char kc = Char.ToLower(kcr);
 
     // reject if unknown key
-    if ( ! KeySet.Contains(kc) ) return SC.IU_KEY;
+    if ( ! KeySet.Contains(kc) ) {
+      this.Error = $"Unexpected key: {safe_fmt(kcr)}";
+      return false;
+    }
 
     // handle deferred clear
     if ( "=" == this.EqualAtEnd) {
@@ -98,32 +83,31 @@ class Logic {
     // backspace - remove last character of input
     var last = this.Inputs.Length -1;
     if ('\b' == kc) {
-      WriteLine("bs1");
       if (last >= 0) this.Inputs = this.Inputs.Remove(last,1);
-      WriteLine($"bs2: {this.Inputs}");
-      return SC.OK;
+      return true;
     }
 
     // clear
     if ('c' == kc) {
       this.Inputs = "";
-      return SC.OK;
+      return true;
     }
 
     // "="
     if ('=' == kc) {
       this.EqualAtEnd = "=";
-      return SC.OK;
+      return true;
     }
 
     // digits and operators -- check if ok to accept in context
     if ( KeyOk(kc) ) {
       this.Inputs += kc;
-      return SC.OK;
+      return true;
     }
 
     // report helpful message about why key was rejected
-    return SC.OK;
+    this.Error = WhatKeysOk();
+    return false;
   }
 
   /*-----------------------------------------------------
@@ -188,6 +172,26 @@ class Logic {
       res = "(incomplete expression)";
     }
     return res;
+  }
+
+  /*-------------------------------------------------------------------------
+  safe formatting for messages
+  avoid putting control characters into messages
+  */
+
+  public string safe_fmt(char c) {
+    var ki = (int)c;
+    string f;
+    if (Char.IsControl(c)) f = $"0x{ki:X2}";
+    else                   f = $"'{c}'";
+    return f;
+  }
+
+  public string safe_fmt(string s) {
+    string f;
+    if (1 == s.Length)  f = $"[{safe_fmt(s[0])}]";
+    else                f = $"\"{s}\"";
+    return f;
   }
 
   /*-------------------------------------------------------------------------

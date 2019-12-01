@@ -11,23 +11,6 @@ public class LogicTest
     Write("\u001B[2J\u001B[H");
   }
 
-  private static string safe_fmt(char c) {
-    // avoid sending control characters to console
-    var ki = (int)c;
-    string f;
-    if (Char.IsControl(c)) f = $"0x{ki:X2}";
-    else                   f = $"'{c}'";
-    return f;
-  }
-
-  private static string safe_fmt(string s) {
-    // avoid sending control characters to console
-    string f;
-    if (1 == s.Length)  f = $"[{safe_fmt(s[0])}]";
-    else                f = $"\"{s}\"";
-    return f;
-  }
-
   public static void Main(string[] args)
   {
     var logic = new Logic();
@@ -77,19 +60,20 @@ public class LogicTest
       else          k = ke;
 
       // process the key through logic and get results
-      var e = logic.DoKey(k);
+      var p = logic.DoKey(k);
       var i = logic.GetInputs();
       var o = logic.Eval();
-      var m = logic.GetStatusString(e);
+      var m = logic.GetError();
 
       // show results
       cls();
       WriteLine(topline);
       /*
+      Used for debugging ReadKey()
       Write($"n_keys:{n_keys}");
-      Write($"   kc:{safe_fmt(kc)}");
+      Write($"   kc:{logic.safe_fmt(kc)}");
       Write($"   ke:\"{ke}\"");
-      Write($"   k:{safe_fmt(k)}\n");
+      Write($"   k:{logic.safe_fmt(k)}\n");
       */
       WriteLine($"i {i,40}");
       WriteLine($"o {o,40}");
