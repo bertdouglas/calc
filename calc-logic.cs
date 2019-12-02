@@ -37,6 +37,7 @@ class Logic {
     // allow string aliases for keys
     var KeyMap = new Dictionary<string,char> {
       { "Backspace" , '\b'},
+      { "bs" ,        '\b'},
     };
     // try to map it
     if ( KeyMap.ContainsKey(ks) )  return DoKey(KeyMap[ks]);

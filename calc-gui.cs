@@ -18,7 +18,6 @@ public class CalcGui : Form
     tb.Width = width;
     tb.ReadOnly = true;
     tb.TextAlign = HorizontalAlignment.Right;
-    tb.Text = "01234567";
     this.Controls.Add(tb);
     p = p + new Size(0,tb.Height+cg);
     return tb;
@@ -124,6 +123,11 @@ public class CalcGui : Form
   Initialize the window
   */
 
+  private TextBox tb_out;
+  private TextBox tb_in;
+  private TextBox tb_msg;
+  private Logic logic;
+
   public CalcGui() {
 
     Text = "P1 Calculator";
@@ -147,6 +151,7 @@ public class CalcGui : Form
     var font_btn = new Font("Microsoft Sans Serif", 20);
     var font_in  = new Font("Microsoft Sans Serif", 12);
     var font_out = new Font("Microsoft Sans Serif", 20);
+    var font_msg = new Font("Microsoft Sans Serif", 10);
 
     // starting location to add controls
     var loc = new Point(cg-wbf,cg);
@@ -154,6 +159,7 @@ public class CalcGui : Form
     // input and output text boxes
     var ti = TB(font_in,  ref loc, tbx, cg);
     var to = TB(font_out, ref loc, tbx, cg);
+    var tm = TB(font_msg, ref loc, tbx, cg);
 
     // window height, now can set size
     int wy = br*bs + (br+1)*cg + loc.Y;
@@ -180,19 +186,23 @@ public class CalcGui : Form
       this.Controls.Add(b);
     }
 
-    // logic handler
-    var logic = new Logic();
+    // initialize members
+    this.tb_in = ti;
+    this.tb_out = to;
+    this.tb_msg = tm;
+    this.logic = new Logic();
   }
 
   private void ButtonClick(object sender, EventArgs e) {
     var s = (sender as Button).Text;
-    WriteLine($"clicked {s}");
-    var ok = logic.DoKey(s);
-    var m = logic.GetError;
-    var i = logic.GetInputs;
-    var o = logic.Eval;
-    ti.Text = i;
-    to.Text = o;
+    //WriteLine($"clicked {s}");
+    bool ok = this.logic.DoKey(s);
+    string m = this.logic.GetError();
+    string i = this.logic.GetInputs();
+    string o = this.logic.Eval();
+    this.tb_in.Text = i;
+    this.tb_out.Text = o;
+    this.tb_msg.Text = m;
   }
 
   static public void Main() {
