@@ -140,7 +140,6 @@ public class CalcGui : Form
     // text box width
     int tbx = wx-2*cg;
 
-
     // size of 1-wide and 2-wide buttons
     var bs1 = new Size(bs,bs);
     var bs2 = new Size(bs*2+cg,bs);
@@ -180,11 +179,20 @@ public class CalcGui : Form
       b.Visible = true;
       this.Controls.Add(b);
     }
+
+    // logic handler
+    var logic = new Logic();
   }
 
   private void ButtonClick(object sender, EventArgs e) {
     var s = (sender as Button).Text;
     WriteLine($"clicked {s}");
+    var ok = logic.DoKey(s);
+    var m = logic.GetError;
+    var i = logic.GetInputs;
+    var o = logic.Eval;
+    ti.Text = i;
+    to.Text = o;
   }
 
   static public void Main() {
